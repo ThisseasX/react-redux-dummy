@@ -1,1 +1,1 @@
-export { getRandomColor } from './utils';
+export { getRandomColor, pick, shallowCompare } from './utils';

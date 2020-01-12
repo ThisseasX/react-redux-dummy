@@ -1,11 +1,15 @@
 {
   "name": "react-redux-dummy",
   "version": "1.0.0",
-  "description": "",
+  "description": "Dummy implementation of react-redux.",
   "main": "index.js",
+  "homepage": "https://thisseasx.github.io/react-redux-dummy",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "parcel src/index.html --open"
+    "start": "parcel src/index.html --open",
+    "build": "parcel build src/index.html --public-url https://thisseasx.github.io/react-redux-dummy",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +20,8 @@
     "redux": "^4.0.5"
   },
   "devDependencies": {
-    "parcel-bundler": "^1.12.4"
+    "gh-pages": "^2.2.0",
+    "parcel-bundler": "^1.12.4",
+    "parcel-plugin-clean-dist": "0.0.6"
   }
 }

@@ -3,9 +3,7 @@ import { getRandomColor } from '/utils';
 import { connect } from '/react-redux';
 
 const Counter2 = ({ counter2 }) => (
-  <>
-    <p style={{ backgroundColor: getRandomColor() }}>{counter2}</p>
-  </>
+  <p style={{ backgroundColor: getRandomColor() }}>{counter2}</p>
 );
 
 const mapStateToProps = ({ counter2 }) => ({

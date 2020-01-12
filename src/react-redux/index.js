@@ -1,4 +1,5 @@
-import React, { createContext } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
+import { pick, shallowCompare } from '/utils';
 
 const StoreContext = createContext();
 
@@ -8,49 +9,33 @@ const Provider = ({ store, children }) => (
 
 const noop = () => ({});
 
-const Connect = Component =>
-  class ConnectedComponent extends React.Component {
-    constructor({ store, mapStateToProps, mapDispatchToProps }) {
-      super();
+const Connect = Component => ({ store, mapStateToProps, mapDispatchToProps }) => {
+  mapStateToProps = mapStateToProps || noop;
+  mapDispatchToProps = mapDispatchToProps || noop;
 
-      mapStateToProps = mapStateToProps || noop;
-      mapDispatchToProps = mapDispatchToProps || noop;
+  const stateProps = mapStateToProps(store.getState());
+  const actionProps = mapDispatchToProps(store.dispatch);
 
-      const stateProps = mapStateToProps(store.getState());
-      this.actionProps = mapDispatchToProps(store.dispatch);
+  const [state, setState] = useState(stateProps);
 
-      this.state = { ...stateProps };
+  useEffect(() => {
+    const unsubscribe = store.subscribe(() => {
+      const newState = store.getState();
+      const subscribedFields = Object.keys(state);
+      const subscribedState = pick(subscribedFields, newState);
 
-      this.unsubscribe = store.subscribe(() => {
-        const newState = store.getState();
-        const targetState = {};
+      const isIdentical = shallowCompare(state, subscribedState);
 
-        const hasChanges = Object.entries(this.state).some(([key, value]) => {
-          console.log(
-            `Name: ${Component.name}, Key: ${key}, Value: ${value}, newValue: ${newState[key]}`,
-          );
+      if (!isIdentical) {
+        setState(subscribedState);
+      }
+    });
 
-          targetState[key] = newState[key];
+    return unsubscribe;
+  });
 
-          return value !== newState[key];
-        });
-
-        console.log(`Name: ${Component.name}, HasChanges: ${hasChanges}`);
-
-        if (hasChanges) {
-          this.setState({ ...targetState });
-        }
-      });
-    }
-
-    componentWillUnmount() {
-      this.unsubscribe();
-    }
-
-    render() {
-      return <Component {...this.state} {...this.actionProps} />;
-    }
-  };
+  return <Component {...state} {...actionProps} />;
+};
 
 const connect = (mapStateToProps, mapDispatchToProps) => Component => {
   const ConnectedComponent = Connect(Component);
