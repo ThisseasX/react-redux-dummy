@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext } from 'react';
 
 const StoreContext = createContext();
 
@@ -8,39 +8,49 @@ const Provider = ({ store, children }) => (
 
 const noop = () => ({});
 
-const Connect = Component => ({ store, mapStateToProps, mapDispatchToProps }) => {
-  mapStateToProps = mapStateToProps || noop;
-  mapDispatchToProps = mapDispatchToProps || noop;
+const Connect = Component =>
+  class ConnectedComponent extends React.Component {
+    constructor({ store, mapStateToProps, mapDispatchToProps }) {
+      super();
 
-  const stateProps = mapStateToProps(store.getState());
-  const actionProps = mapDispatchToProps(store.dispatch);
+      mapStateToProps = mapStateToProps || noop;
+      mapDispatchToProps = mapDispatchToProps || noop;
 
-  const [state, setState] = useState(stateProps);
+      const stateProps = mapStateToProps(store.getState());
+      this.actionProps = mapDispatchToProps(store.dispatch);
 
-  useEffect(() => {
-    const unsubscribe = store.subscribe(() => {
-      const newState = store.getState();
+      this.state = { ...stateProps };
 
-      const hasChanges = Object.entries(state).some(
-        ([key, value]) => {
-          console.log(`Key: ${key}, Value: ${value}, newValue: ${newState[key]}`);
+      this.unsubscribe = store.subscribe(() => {
+        const newState = store.getState();
+        const targetState = {};
 
-          return value !== newState[key]
-        },
-      );
+        const hasChanges = Object.entries(this.state).some(([key, value]) => {
+          console.log(
+            `Name: ${Component.name}, Key: ${key}, Value: ${value}, newValue: ${newState[key]}`,
+          );
 
-      if (hasChanges) {
-        setState(newState);
-      }
-    });
+          targetState[key] = newState[key];
 
-    return () => {
-      unsubscribe();
-    };
-  }, []);
+          return value !== newState[key];
+        });
 
-  return <Component {...state} {...actionProps} />;
-};
+        console.log(`Name: ${Component.name}, HasChanges: ${hasChanges}`);
+
+        if (hasChanges) {
+          this.setState({ ...targetState });
+        }
+      });
+    }
+
+    componentWillUnmount() {
+      this.unsubscribe();
+    }
+
+    render() {
+      return <Component {...this.state} {...this.actionProps} />;
+    }
+  };
 
 const connect = (mapStateToProps, mapDispatchToProps) => Component => {
   const ConnectedComponent = Connect(Component);
